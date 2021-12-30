@@ -375,7 +375,7 @@ void BRCMFX::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t
 					DBGLOG("BRCMFX", "all patches are successfuly applied to %s", idList[i]);
 				
 				// Change Country Code
-				if (!ADDPR(brcmfx_config).override_country)
+				if (ADDPR(brcmfx_config).override_country)
 				{
 					patcher.clearError();
 					KernelPatcher::RouteRequest requests[] {
