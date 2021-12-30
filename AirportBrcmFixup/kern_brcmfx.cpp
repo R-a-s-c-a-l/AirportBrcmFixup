@@ -361,20 +361,32 @@ void BRCMFX::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t
 					{symbolList[i][1], probe, orgProbe[i]},
 					// Chip identificator checking patch
 					{symbolList[i][2], siPmuFvcoPllreg[i], orgSiPmuFvcoPllreg[i]},
-					// Wi-Fi 5 Ghz/Country code patch (required for 10.11)
-					{symbolList[i][3], wlc_set_countrycode_rev[i], orgWlcSetCountryCodeRev[i]},
 					// Third party device patch
-					{symbolList[i][4], newVendorString},
+					{symbolList[i][3], newVendorString},
 					// White list restriction patch
-					{symbolList[i][5], checkBoardId[i]},
+					{symbolList[i][4], checkBoardId[i]},
 					// Disable "32KHz LPO Clock not running" panic in AirPort_BrcmXXX
-					{symbolList[i][6], osl_panic}
+					{symbolList[i][5], osl_panic}
 				};
 
 				if (!patcher.routeMultiple(index, requests, address, size))
 					SYSLOG("BRCMFX", "at least one basic patch is failed, error = %d", patcher.getError());
 				else
 					DBGLOG("BRCMFX", "all patches are successfuly applied to %s", idList[i]);
+				
+				// Change Country Code
+				if (!ADDPR(brcmfx_config).override_country)
+				{
+					patcher.clearError();
+					KernelPatcher::RouteRequest requests[] {
+						// Wi-Fi 5 Ghz/Country code patch (required for 10.11)
+						{symbolList[i][6], wlc_set_countrycode_rev[i], orgWlcSetCountryCodeRev[i]},
+					};
+					if (!patcher.routeMultiple(index, requests, address, size))
+						SYSLOG("BRCMFX", "change country code is failed, error = %d", patcher.getError());
+					else
+						DBGLOG("BRCMFX", "change country code is successfuly applied to %s", idList[i]);
+				}
 				
 				if ((ADDPR(brcmfx_config).brcmfx_driver == -1 && i == AirPort_BrcmNIC_MFG) ||
 					(ADDPR(brcmfx_config).brcmfx_driver != -1 && ADDPR(brcmfx_config).brcmfx_driver != i))

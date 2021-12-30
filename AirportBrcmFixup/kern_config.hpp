@@ -35,6 +35,7 @@ public:
 	bool awaitPublishing(IORegistryEntry *obj);
 
 	char country_code[5]        {"US"};
+    bool override_country       {false};
 	
 	bool disabled               {false};
 	bool enable_wowl            {false};

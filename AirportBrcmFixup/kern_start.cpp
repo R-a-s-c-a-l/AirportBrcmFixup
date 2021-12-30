@@ -59,7 +59,9 @@ void Configuration::readArguments(IOService* provider)
 	{
 		disabled = checkKernelArgument(bootargOff);
 
-		PE_parse_boot_argn(bootargBrcmCountry, country_code, sizeof(country_code));
+        if (PE_parse_boot_argn(bootargBrcmCountry, country_code, sizeof(country_code));) {
+            override_country = true;
+        }
 
 		PE_parse_boot_argn(bootargBrcmDriver, &brcmfx_driver, sizeof(brcmfx_driver));
 		brcmfx_driver = checkBrcmfxDriverValue(brcmfx_driver);
@@ -87,6 +89,18 @@ void Configuration::readArguments(IOService* provider)
 			DBGLOG("BRCMFX", "%s in ioreg is set to %d", bootargBrcmAspm, brcmfx_aspm);
 			override_aspm = true;
 		}
+        
+        if (PE_parse_boot_argn(bootargBrcmCountry, country_code, sizeof(country_code))) {
+            DBGLOG("BRCMFX", "%s in boot-arg is set to %d", bootargBrcmCountry, country_code);
+            override_country = true;
+        } else {
+            auto data = OSDynamicCast(OSData, provider->getProperty(bootargBrcmCountry));
+            if (data) {
+                lilu_os_strncpy(country_code, reinterpret_cast<const char*>(data->getBytesNoCopy()), data->getLength());
+                DBGLOG("BRCMFX", "%s in ioreg is set to %s", bootargBrcmCountry, country_code);
+                override_country = true;
+            }
+        }
 
 		if (brcmfx_aspm != 0xFF)
 		{
@@ -139,16 +153,6 @@ void Configuration::readArguments(IOService* provider)
 			DBGLOG("BRCMFX", "%s in ioreg is set to %d", bootargBrcmDriver, brcmfx_driver);
 		}
 		brcmfx_driver = checkBrcmfxDriverValue(brcmfx_driver);
-
-		if (PE_parse_boot_argn(bootargBrcmCountry, country_code, sizeof(country_code))) {
-			DBGLOG("BRCMFX", "%s in boot-arg is set to %d", bootargBrcmCountry, country_code);
-		} else {
-			auto data = OSDynamicCast(OSData, provider->getProperty(bootargBrcmCountry));
-			if (data) {
-				lilu_os_strncpy(country_code, reinterpret_cast<const char*>(data->getBytesNoCopy()), data->getLength());
-				DBGLOG("BRCMFX", "%s in ioreg is set to %s", bootargBrcmCountry, country_code);
-			}
-		}
 
 		config_is_ready = true;
 	}
